@@ -209,6 +209,20 @@ export class MaskService extends MaskApplierService {
     );
   }
 
+  public setFormElementWhenIsContainer(inputElement: HTMLInputElement) {
+    if (this._formElement.localName === 'input') {
+      return;
+    }
+
+    if (inputElement === null) {
+      console.warn('mask-service: Could not find Input Element.  Please make sure one is present.');
+
+      return;
+    }
+
+    this._formElement = inputElement;
+  }
+
   private _checkForIp(inputVal: string): string {
     if (inputVal === '#') {
       return `${this.placeHolderCharacter}.${this.placeHolderCharacter}.${this.placeHolderCharacter}.${this.placeHolderCharacter}`;

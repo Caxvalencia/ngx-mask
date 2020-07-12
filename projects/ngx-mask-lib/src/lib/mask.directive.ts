@@ -6,7 +6,7 @@ import {
   ValidationErrors,
   Validator,
 } from '@angular/forms';
-import { Directive, forwardRef, HostListener, Inject, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Directive, forwardRef, HostListener, Inject, Input, OnChanges, SimpleChanges, AfterViewInit } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 
 import { CustomKeyboardEvent } from './custom-keyboard-event';
@@ -16,7 +16,7 @@ import { MaskService } from './mask.service';
 // tslint:disable deprecation
 // tslint:disable no-input-rename
 @Directive({
-  selector: 'input[mask], textarea[mask]',
+  selector: '[applyTo], input[mask], textarea[mask]',
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -31,8 +31,9 @@ import { MaskService } from './mask.service';
     MaskService,
   ],
 })
-export class MaskDirective implements ControlValueAccessor, OnChanges, Validator {
+export class MaskDirective implements ControlValueAccessor, OnChanges, Validator, AfterViewInit {
   @Input('mask') public maskExpression: string = '';
+  @Input('applyTo') public applyTo?: HTMLInputElement | Promise<HTMLInputElement>;
   @Input() public specialCharacters: IConfig['specialCharacters'] = [];
   @Input() public patterns: IConfig['patterns'] = {};
   @Input() public prefix: IConfig['prefix'] = '';
@@ -62,6 +63,14 @@ export class MaskDirective implements ControlValueAccessor, OnChanges, Validator
     private _maskService: MaskService,
     @Inject(config) protected _config: IConfig
   ) {}
+
+  async ngAfterViewInit() {
+    if (this.applyTo) {
+      const inputElement = this.applyTo instanceof Promise ? await this.applyTo : this.applyTo;
+
+      this._maskService.setFormElementWhenIsContainer(inputElement);
+    }
+  }
 
   public onChange = (_: any) => {};
   public onTouch = () => {};
@@ -529,7 +538,7 @@ export class MaskDirective implements ControlValueAccessor, OnChanges, Validator
 
   private _setMask() {
     if (this._maskExpressionArray.length > 0) {
-      this._maskExpressionArray.some(mask => {
+      this._maskExpressionArray.some((mask) => {
         const test = this._maskService.removeMask(this._inputValue).length <= this._maskService.removeMask(mask).length;
         if (this._inputValue && test) {
           this._maskValue = mask;
